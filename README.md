@@ -18,16 +18,22 @@ docker run -it --cap-add=NET_ADMIN --name router   --network ndn-network -d=true
 docker run -it --cap-add=NET_ADMIN --name consumer --network ndn-network -d=true <tag:version>
 docker run -it --cap-add=NET_ADMIN --name producer --network ndn-network -d=true <tag:version>
 
+# Launch NFD
+for node in consumer router producer; do
+    docker exec -d ${node} nfd-start
+done
+
 # Construct NDN topology
-docker exec consumer nfdc face create udp://router
-docker exec consumer nfdc route add /icn2020 udp://router
-docker exec router nfdc face create udp://producer
-docker exec router nfdc route add /icn2020 udp://producer
+docker exec -d consumer nfdc face create udp://router
+docker exec -d consumer nfdc route add /icn2020 udp://router
+docker exec -d router nfdc face create udp://producer
+docker exec -d router nfdc route add /icn2020 udp://producer
+
 # Launch NDN apps at producer and consumer
 docker exec -d producer ndnpingserver icn2020/producer
-docker exec consumer ndnpingserver -c 10 icn2020/producer
+docker exec consumer ndnping -c 10 icn2020/producer
 # Check the ping result...
 ```
 
-## for JP
+## for JP user
 Docker上でNDN(NFD)を試すのにご利用ください.
