@@ -1,0 +1,29 @@
+FROM ubuntu:18.04
+# If possible, use site-specific sources.list for better throughput
+# COPY sources.list /etc/apt/sources.list
+RUN set -x && \
+    apt update && \
+    apt upgrade -y && \
+    apt install -y software-properties-common psmisc && \
+    add-apt-repository ppa:named-data/ppa && \
+    apt update && \
+    apt install -y nfd ndn-tools && \
+    # Modify the default nfd.conf
+    cp /etc/ndn/nfd.conf /etc/ndn/nfd.conf.bak && \
+    sed -i -e "s/  user ndn/;  user ndn/" /etc/ndn/nfd.conf && \
+    sed -i -e "s/  group ndn/;  group ndn/" /etc/ndn/nfd.conf && \
+    sed -i -e "s/default_level INFO/default_level WARN/" /etc/ndn/nfd.conf && \
+    # If you do not use certfile for authorize commands (recommended for internal test)
+    sed -i -e "s/certfile certs/certfile any; certs/" /etc/ndn/nfd.conf && \
+    # Remove default scripts
+    rm /usr/bin/nfd-start && \
+    rm /usr/bin/nfd-stop 
+COPY nfd-start /usr/bin/nfd-start
+COPY nfd-stop /usr/bin/nfd-stop
+WORKDIR /root
+RUN nfd-start
+    #  **APPENDIX**
+    # If you use certfile, use below commands. See further details at (https://named-data.net/doc/NFD/current/FAQ.html)
+    # cp /etc/ndn/certs/localhost_daemons_nfd.ndncert /etc/ndn/certs/localhost_daemons_nfd.ndncert.bak
+    # ndnsec-keygen /`whoami` | ndnsec-install-cert -
+    # ndnsec-cert-dump -i /`whoami` >/etc/ndn/certs/localhost_daemons_nfd.ndncert
